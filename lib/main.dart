@@ -35,38 +35,33 @@ class _AppState extends State<App> {
   Future<CubeUser> futureUser;
   bool signedUp;
 
-  Future<CubeUser> fetchUser() async {
-    final response = await gamesCollection.get();
-
-    if (response.size > 0) {
-      List<Game> gamesList = List();
-      response.docs.forEach((element) {
-        Game game = Game.fromJson(element.data(), element.id);
-        gamesList.add(game);
-      });
-      return gamesList;
-    } else {
-      throw Exception('Empty response');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // getting the user
     // and signing the user up
     // or logging the user in
-    _getId().then((value) {
-      this.getUser(value["id"], value["name"], value["model"]);
-    });
+    // _getId().then((value) {
+    //   this.getUser(value["id"], value["name"], value["model"]);
+    // });
 
-    print(_cubeSession);
     return MaterialApp(
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: VoiceScreen(
-        user: _user,
-        session: _cubeSession,
+      home: FutureBuilder(
+        future: futureUser,
+        builder: (BuildContext context, AsyncSnapshot<CubeUser> snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return VoiceScreen(
+              user: snapshot.data,
+              session: _cubeSession,
+            );
+          } else {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        },
       ),
     );
   }
@@ -83,10 +78,11 @@ class _AppState extends State<App> {
     // Sign up user or
 
     createSession().then((cubeSession) {
-      print(cubeSession);
       setState(() => _cubeSession = cubeSession);
       _getId().then((value) {
-        futureUser = this.getUser(value["id"], value["name"], value["model"]);
+        setState(() {
+          futureUser = this.getUser(value["id"], value["name"], value["model"]);
+        });
       });
     }).catchError((error) {});
   }
@@ -123,6 +119,7 @@ class _AppState extends State<App> {
 
   Future<CubeUser> getUser(
       String username, String phoneName, String phoneModel) async {
+    print('X0: signing');
     CubeUser rVal;
     CubeUser existingUser;
     String login = username;
@@ -131,6 +128,7 @@ class _AppState extends State<App> {
     if (existingUser != null) {
       CubeUser user = CubeUser(login: username, password: 'password');
       rVal = await signIn(user);
+      print('X0: direct singing in ' + rVal.toString());
     } else {
       CubeUser newUser = CubeUser(
           login: username,
@@ -139,51 +137,11 @@ class _AppState extends State<App> {
           fullName: phoneName,
           customData: "{device_type: $phoneModel}");
       var signUpVal = await signUp(newUser);
+      print('X0: signup val is comming up ' + signUpVal.toString());
       CubeUser user = CubeUser(login: username, password: 'password');
       rVal = await signIn(user);
+      print('X0: rval is comming up ' + rVal.toString());
     }
     return rVal;
-
-    // getUserByLogin(login).then((cubeUser) {
-    //   // log user in
-    //   print('found user');
-    //   print(cubeUser);
-    //   CubeUser user = CubeUser(login: username, password: 'password');
-    //   if (_cubeSession.user == null) {
-    //     signIn(user).then((cubeUser) {
-    //       setState(() {
-    //         _user = cubeUser;
-    //       });
-    //     }).catchError((error) {
-    //       // sign in failed
-    //       // TODO: throw error
-    //     });
-    //   }
-    // }).catchError((error) {
-    //   print('no user found');
-
-    //   // sign new user up
-    //   CubeUser user = CubeUser(
-    //       login: username,
-    //       password: 'password',
-    //       email: username + '@talkie-walkie.nl',
-    //       fullName: phoneName,
-    //       customData: "{device_type: $phoneModel}");
-
-    //     signUp(user).then((cubeUser) {
-    //     print('signed up successfully.');
-    //     setState(() {
-    //       signedUp = true;
-    //     });
-    //     print(cubeUser);
-    //   }).catchError((error) {
-    //     print('signed up failed.');
-
-    //     setState(() {
-    //       signedUp = false;
-    //     });
-    //     print(error);
-    //   });
-    // });
   }
 }

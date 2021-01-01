@@ -9,7 +9,7 @@ class VoiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('X2: First entry ' + user.toString());
+    // print('X2: First entry ' + user.toString());
 
     return Scaffold(
       appBar: AppBar(
@@ -25,12 +25,12 @@ class BodyLayout extends StatefulWidget {
 
   BodyLayout({Key key, @required this.user, @required this.session})
       : super(key: key) {
-    print('X2: Second entry ' + user.toString());
+    // print('X2: Second entry ' + user.toString());
   }
 
   @override
   _BodyLayoutState createState() {
-    print('X2: stil Second entry ' + this.user.toString());
+    // print('X2: stil Second entry ' + this.user.toString());
     return _BodyLayoutState(user: this.user, session: this.session);
   }
 }
@@ -40,7 +40,6 @@ class _BodyLayoutState extends State<BodyLayout> {
   CubeSession session;
 
   _BodyLayoutState({this.user, this.session});
-
 
   @override
   Widget build(BuildContext context) {
