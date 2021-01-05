@@ -10,6 +10,7 @@ import 'src/utils/configs.dart' as config;
 import 'src/voice_screen.dart';
 
 import 'package:device_info/device_info.dart';
+import 'package:flutter/cupertino.dart';
 
 void main() {
   // runApp(App());
@@ -119,17 +120,17 @@ class _AppState extends State<App> {
 
   Future<CubeUser> getUser(
       String username, String phoneName, String phoneModel) async {
-    print('X0: signing');
+    // print('X0: signing');
     CubeUser rVal;
     CubeUser existingUser;
     String login = username;
 
     existingUser = await getUserByLogin(login).catchError((error) => null);
-    print('FX0: ' + existingUser.toString());
+    // print('FX0: ' + existingUser.toString());
     if (existingUser != null) {
       CubeUser user = CubeUser(login: username, password: 'password');
       rVal = await signIn(user);
-      print('X0: direct singing in ' + rVal.toString());
+      // print('X0: direct singing in ' + rVal.toString());
     } else {
       CubeUser newUser = CubeUser(
           login: username,
@@ -138,10 +139,10 @@ class _AppState extends State<App> {
           fullName: phoneName,
           customData: "{device_type: $phoneModel}");
       var signUpVal = await signUp(newUser);
-      print('X0: signup val is comming up ' + signUpVal.toString());
+      // print('X0: signup val is comming up ' + signUpVal.toString());
       CubeUser user = CubeUser(login: username, password: 'password');
       rVal = await signIn(user);
-      print('X0: rval is comming up ' + rVal.toString());
+      // print('X0: rval is comming up ' + rVal.toString());
     }
     return rVal;
   }

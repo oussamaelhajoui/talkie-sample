@@ -1,26 +1,26 @@
-import 'package:connectySample/src/models/initPackage.dart';
 import 'package:connectycube_sdk/connectycube_sdk.dart';
 import 'package:flutter/material.dart';
 import 'utils/call_manager.dart';
-// import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:flutter/cupertino.dart';
 
 class VoiceScreen extends StatelessWidget {
   final CubeUser user;
   final CubeSession session;
-
-  VoiceScreen({Key key, this.user, this.session}) : super(key: key);
+  VoiceScreen({
+    Key key,
+    this.user,
+    this.session,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // print('X2: First entry ' + user.toString());
 
-    return Scaffold(
-      appBar: AppBar(
-          automaticallyImplyLeading: false, title: Text('Talkie Walkie')),
-      body: BodyLayout(
-        user: user,
-        session: session,
-      ),
+    return CupertinoPageScaffold(
+      // appBar: AppBar(
+      // automaticallyImplyLeading: false, title: Text('Talkie Walkie')),
+      backgroundColor: Colors.yellow,
+      child: SafeArea(child: BodyLayout(user: user, session: session)),
     );
   }
 }
@@ -51,12 +51,11 @@ class _BodyLayoutState extends State<BodyLayout> {
   Map<int, RTCVideoRenderer> streams = {};
 
   String joinRoomId;
-  CallManager _callManager;
-  ConferenceClient callClient;
-  ConferenceSession callSession;
+  // CallManager _callManager;
+  ConferenceClient _callClient;
+  ConferenceSession _callSession;
   ConferenceSession _currentCall;
-
-  Future<InitPackage> futurePackage;
+  CallManager _callManager;
 
   _BodyLayoutState({this.user, this.session});
 
@@ -72,9 +71,6 @@ class _BodyLayoutState extends State<BodyLayout> {
     CubeUser userLogin =
         CubeUser(id: user.id, login: user.login, password: 'password');
     _loginToCC(context, userLogin);
-
-    futurePackage = getPackage()
-        .catchError((error) => print("DDDDDDDDDDDDDDDDDDDDDDDDDDDD" + error));
   }
 
   @override
@@ -90,82 +86,74 @@ class _BodyLayoutState extends State<BodyLayout> {
     print('X2: third entry ' + user.toString());
 
     String name = this.user != null ? this.user.fullName : 's';
-    dynamic talkButtons = (InitPackage package) => [];
+    List<dynamic> talkButtons = [];
     if (showButtons) {
-      talkButtons = (InitPackage package) => ([
-            GestureDetector(
-              onTap: () => _muteTalking(context, user, package),
-              child: Container(
-                margin: EdgeInsets.all(15),
-                width: 200,
-                height: 100,
-                decoration: BoxDecoration(color: Colors.red),
-                child: Center(
-                  child: Text(
-                    muteText,
-                    style: TextStyle(color: Colors.white, fontSize: 25),
-                  ),
-                ),
+      talkButtons = [
+        GestureDetector(
+          onTap: () => _muteTalking(context, user),
+          child: Container(
+            margin: EdgeInsets.all(15),
+            width: 200,
+            height: 100,
+            decoration: BoxDecoration(color: Colors.red),
+            child: Center(
+              child: Text(
+                muteText,
+                style: TextStyle(color: Colors.white, fontSize: 25),
               ),
             ),
-            GestureDetector(
-              onTap: () => _toggleSpeaker(context, user, package),
-              child: Container(
-                margin: EdgeInsets.all(15),
-                width: 200,
-                height: 100,
-                decoration: BoxDecoration(color: Colors.purple),
-                child: Center(
-                  child: Text(
-                    speakerText,
-                    style: TextStyle(color: Colors.white, fontSize: 25),
-                  ),
-                ),
+          ),
+        ),
+        GestureDetector(
+          onTap: () => _toggleSpeaker(context, user),
+          child: Container(
+            margin: EdgeInsets.all(15),
+            width: 200,
+            height: 100,
+            decoration: BoxDecoration(color: Colors.purple),
+            child: Center(
+              child: Text(
+                speakerText,
+                style: TextStyle(color: Colors.white, fontSize: 25),
               ),
             ),
-          ]);
+          ),
+        ),
+      ];
     } else {
-      talkButtons = (InitPackage package) => [];
+      talkButtons = [];
     }
 
-    return FutureBuilder(
-        future: futurePackage,
-        builder: (BuildContext context, AsyncSnapshot<InitPackage> snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Padding(
-              padding: EdgeInsets.all(48),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(
-                  "Select user to login hello: " + name,
-                  style: TextStyle(
-                    fontSize: 22,
-                  ),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.all(48),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(
+            "Select user to login hello: " + name,
+            style: TextStyle(
+              fontSize: 22,
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _startTalking(context, user),
+            child: Container(
+              margin: EdgeInsets.all(15),
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Center(
+                child: Text(
+                  joinText,
+                  style: TextStyle(color: Colors.white, fontSize: 25),
+                  textAlign: TextAlign.center,
                 ),
-                GestureDetector(
-                  onTap: () => _startTalking(context, user, snapshot.data),
-                  child: Container(
-                    margin: EdgeInsets.all(15),
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(color: Colors.blue),
-                    child: Center(
-                      child: Text(
-                        joinText,
-                        style: TextStyle(color: Colors.white, fontSize: 25),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ),
-                ...talkButtons(snapshot.data),
-              ]),
-            );
-          } else {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-        });
+              ),
+            ),
+          ),
+          ...talkButtons,
+        ]),
+      ),
+    );
   }
 
   _loginToCC(BuildContext context, CubeUser user) async {
@@ -198,7 +186,7 @@ class _BodyLayoutState extends State<BodyLayout> {
 
       // init
       _initConferenceConfig();
-      // await _initCalls(cubeUser);
+      // await _initCalls(cubeUser, null);
       joinRoomId = '1';
       // _goSelectOpponentsScreen(context, cubeUser);
     }).catchError(_processLoginError);
@@ -229,15 +217,30 @@ class _BodyLayoutState extends State<BodyLayout> {
         });
   }
 
-  _initCalls(CubeUser user) async {
-    callSession.onLocalStreamReceived = (mediaStream) {
+  _initCalls(CubeUser user, ConferenceSession __callSession) async {
+    _callClient = ConferenceClient.instance;
+
+    setState(() {
+      _callManager = CallManager.instance;
+    });
+
+    int callType = CallType.AUDIO_CALL;
+    if (__callSession == null) {
+      __callSession = await _callClient.createCallSession(user.id, callType);
+      print('CREATEDX 1: ' + _callSession.toString());
+      setState(() {
+        _callSession = __callSession;
+      });
+    }
+
+    __callSession.onLocalStreamReceived = (mediaStream) {
       // called when local media stream completely prepared
       print('CD: prepared');
 
       _onStreamAdd(ConferenceClient.instance.currentUserId, mediaStream);
     };
 
-    callSession.onRemoteStreamReceived =
+    __callSession.onRemoteStreamReceived =
         (callSession, opponentId, mediaStream) {
       // called when remote media stream received from opponent
       print('CD: onremotereceived');
@@ -245,7 +248,7 @@ class _BodyLayoutState extends State<BodyLayout> {
       _onStreamAdd(ConferenceClient.instance.currentUserId, mediaStream);
     };
 
-    callSession.onPublishersReceived = (publishers) {
+    __callSession.onPublishersReceived = (publishers) {
       // called when received new opponents/publishers
       print('CD: onpubreceived');
 
@@ -253,19 +256,22 @@ class _BodyLayoutState extends State<BodyLayout> {
       handlePublisherReceived(publishers);
     };
 
-    callSession.onPublisherLeft = (publisher) {
+    __callSession.onPublisherLeft = (publisher) {
       // called when opponent/publisher left room
       print('CD: onpubleft');
+      __callSession.unsubscribeFromPublisher(publisher);
     };
 
-    callSession.onError = (ex) {
+    __callSession.onError = (ex) {
       // called when received some exception from conference
       print('CD: error');
     };
 
-    callSession.onSessionClosed = (callSession) {
+    __callSession.onSessionClosed = (callSession) {
       print('CD: closed');
       // called when current session was closed
+
+      // __callSession.unsubscribeFromPublisher(publisher);
     };
   }
 
@@ -273,42 +279,10 @@ class _BodyLayoutState extends State<BodyLayout> {
     ConferenceConfig.instance.url = 'wss://janus.connectycube.com:8989';
   }
 
-  Future<InitPackage> getPackage() async {
-    // if (callSession != null) {
-    //   callSession.joinDialog('1', ((publishers) {
-    //     log('YD: ', publishers.toString());
-    //     _callManager.startCall('1', publishers,
-    //         callSession.currentUserId); // event by system message e.g.
-    //   }));
-    // } else {
-    print('DDDDDDDDDDDDDDDDDDDDDDDDDDDD: ' + callSession.toString());
-
-    callClient = ConferenceClient.instance;
-
-    int callType = CallType.AUDIO_CALL;
-    callSession = await callClient.createCallSession(user.id, callType);
-    callSession.setMicrophoneMute(false);
-    callSession.enableSpeakerphone(false);
-
-    CallManager _callManager = CallManager.instance;
-    return InitPackage.auto(user, callClient, callSession, _callManager);
-    // callSession.joinDialog('1', ((publishers) {
-    //   log('YD: ', publishers.toString());
-    //   callSession.setMicrophoneMute(false);
-    //   callSession.enableSpeakerphone(false);
-    //   _callManager.startCall('1', publishers,
-    //       callSession.currentUserId); // event by system message e.g.
-    // }));
-    // }
-  }
-
-  _startTalking(
-      BuildContext context, CubeUser user, InitPackage package) async {
+  _startTalking(BuildContext context, CubeUser user) async {
     // activate chat
     log('PRESSED TO GO');
     print('pressing gooo');
-    log('DSA: ' + package.toString());
-    return;
 
     setState(() {
       showButtons = true;
@@ -319,75 +293,94 @@ class _BodyLayoutState extends State<BodyLayout> {
         joinText = 'Tap me to leave room 1';
       });
 
-      if (package.session != null) {
-        package.session.joinDialog('1', ((publishers) {
-          log('YD: ', publishers.toString());
-          package.manager.startCall('1', publishers,
-              package.session.currentUserId); // event by system message e.g.
-        }));
-      } else {
-        // callClient = ConferenceClient.instance;
+      // if (_callSession != null) {
+      //   _callSession.joinDialog('1', ((publishers) {
+      //     log('YD: ', publishers.toString());
+      //     _callManager.startCall('1', publishers,
+      //         _callSession.currentUserId); // event by system message e.g.
+      //   }));
+      // } else {
+      _callClient = ConferenceClient.instance;
 
-        // int callType = CallType.AUDIO_CALL;
-        package.session.setMicrophoneMute(false);
-        callSession.enableSpeakerphone(false);
-        // package.session = await callClient.createCallSession(user.id, callType);
+      int callType = CallType.AUDIO_CALL;
+      _callSession = await _callClient.createCallSession(user.id, callType);
+      await _initCalls(user, _callSession);
 
-        package.session.joinDialog('1', ((publishers) {
-          log('YD: ', publishers.toString());
-          package.session.setMicrophoneMute(false);
-          package.session.enableSpeakerphone(false);
-          package.manager.startCall('1', publishers,
-              package.session.currentUserId); // event by system message e.g.
-        }));
-      }
+      setState(() => _callSession = _callSession);
+      // _callSession.setMicrophoneMute(false);
+      // _callSession.enableSpeakerphone(false);
+
+      // _callSession.setMicrophoneMute(false);
+      // _callSession.enableSpeakerphone(true);
+      print("CREATEDX 2:" + _callSession.toString());
+      _callSession.joinDialog('1', ((publishers) {
+        log('YD: ', publishers.toString());
+        print('publishersx:' + publishers.toString());
+        _callManager.startCall('1', publishers,
+            _callSession.currentUserId); // event by system message e.g.
+        subscribeToPublishers(publishers);
+        handlePublisherReceived(publishers);
+      }));
+      // }
     } else {
+      print("XDX: " + _callSession.toString());
       setState(() {
         showButtons = false;
       });
-      setState(() => (muteText = "stop talking"));
-      setState(() => (speakerText = "Stop speaker"));
 
-      callSession.leave();
+      setState(() {
+        muteText = "stop talking";
+        speakerText = "Stop speaker";
+      });
+
+      _callSession.setMicrophoneMute(false);
+      _callSession.enableSpeakerphone(true);
+
+      _callManager.stopCall();
+
+      _callSession.leave();
       // inverting the text
       setState(() {
         joinText = 'Tap me to join room 1';
+        _callSession = null;
       });
     }
   }
 
-  _muteTalking(BuildContext context, CubeUser user, InitPackage package) async {
+  _muteTalking(BuildContext context, CubeUser user) async {
     print('muting');
     if (muteText == "stop talking") {
-      package.session.setMicrophoneMute(true);
+      _callSession.setMicrophoneMute(true);
       setState(() => (muteText = "start talking"));
     } else {
-      package.session.setMicrophoneMute(false);
+      _callSession.setMicrophoneMute(false);
       setState(() => (muteText = "stop talking"));
     }
   }
 
-  void _toggleSpeaker(
-      BuildContext context, CubeUser user, InitPackage package) async {
+  void _toggleSpeaker(BuildContext context, CubeUser user) async {
     print('speaker toggle');
     if (speakerText == "Stop speaker") {
-      package.session.enableSpeakerphone(false);
+      _callSession.enableSpeakerphone(false);
       setState(() => (speakerText = "Start speaker"));
     } else {
-      package.session.enableSpeakerphone(true);
+      _callSession.enableSpeakerphone(true);
       setState(() => (speakerText = "Stop speaker"));
     }
   }
 
   void subscribeToPublishers(List<int> publishers) {
     for (int publisher in publishers) {
-      callSession.subscribeToPublisher(publisher);
+      _callSession.subscribeToPublisher(publisher);
     }
   }
 
   void handlePublisherReceived(List<int> publishers) {
     // if (!_isIncoming) {
+    print('callmanager' + _callManager.toString());
     publishers.forEach((id) => _callManager.handleAcceptCall(id));
+
+    print("pubs" + publishers.toString());
     // }
   }
 
