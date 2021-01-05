@@ -124,7 +124,8 @@ class _AppState extends State<App> {
     CubeUser existingUser;
     String login = username;
 
-    existingUser = await getUserByLogin(login);
+    existingUser = await getUserByLogin(login).catchError((error) => null);
+    print('FX0: ' + existingUser.toString());
     if (existingUser != null) {
       CubeUser user = CubeUser(login: username, password: 'password');
       rVal = await signIn(user);
