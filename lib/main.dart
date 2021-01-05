@@ -46,6 +46,7 @@ class _AppState extends State<App> {
     // });
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
