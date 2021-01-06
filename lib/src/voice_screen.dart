@@ -67,12 +67,13 @@ class _BodyLayoutState extends State<BodyLayout> {
   int _channelFirstPart = 9;
   int _channelSecondPart = 99;
   double _btnTalkOpacity = 1;
-
+  double _pwrOpacity = 1;
   bool _btnDownPressed = false;
   bool _btnUpPressed = false;
   bool _btnTalkingPressed = false;
 
   bool _loopActive = false;
+  String talkImage = "assets/images/talk-image-off.png";
 
   @override
   void initState() {
@@ -412,25 +413,29 @@ class _BodyLayoutState extends State<BodyLayout> {
                               child: GestureDetector(
                                 onTap: () {
                                   print('Power');
+                                  _startTalking(context, user, channelRenderer);
                                 },
-                                child: new Container(
-                                  child: Center(
-                                    child: Text(
-                                      "Power",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 24,
-                                        decoration: TextDecoration.none,
+                                child: Opacity(
+                                  opacity: _pwrOpacity,
+                                  child: new Container(
+                                    child: Center(
+                                      child: Text(
+                                        "Power",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          decoration: TextDecoration.none,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black45,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      width: 5,
-                                      color: Colors.black,
-                                      style: BorderStyle.solid,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black45,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        width: 5,
+                                        color: Colors.black,
+                                        style: BorderStyle.solid,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -473,8 +478,7 @@ class _BodyLayoutState extends State<BodyLayout> {
                             30, // 30 precent of the screen
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            image:
-                                AssetImage("assets/images/talk-image-off.png"),
+                            image: AssetImage(talkImage),
                           ),
                         ),
                       ),
@@ -612,18 +616,22 @@ class _BodyLayoutState extends State<BodyLayout> {
     ConferenceConfig.instance.url = 'wss://janus.connectycube.com:8989';
   }
 
-  _startTalking(BuildContext context, CubeUser user) async {
+  _startTalking(
+      BuildContext context, CubeUser user, String _channelRenderer) async {
     // activate chat
     log('PRESSED TO GO');
     print('pressing gooo');
 
     setState(() {
       showButtons = true;
+      _pwrOpacity = 0.5;
     });
     if (joinText == 'Tap me to join room 1') {
       // inverting the text
+
       setState(() {
         joinText = 'Tap me to leave room 1';
+        talkImage = "assets/images/talk-image-pushed.png";
       });
 
       // if (_callSession != null) {
@@ -646,10 +654,10 @@ class _BodyLayoutState extends State<BodyLayout> {
       // _callSession.setMicrophoneMute(false);
       // _callSession.enableSpeakerphone(true);
       print("CREATEDX 2:" + _callSession.toString());
-      _callSession.joinDialog('1', ((publishers) {
+      _callSession.joinDialog(_channelRenderer, ((publishers) {
         log('YD: ', publishers.toString());
         print('publishersx:' + publishers.toString());
-        _callManager.startCall('1', publishers,
+        _callManager.startCall(_channelRenderer, publishers,
             _callSession.currentUserId); // event by system message e.g.
         subscribeToPublishers(publishers);
         handlePublisherReceived(publishers);
@@ -659,6 +667,8 @@ class _BodyLayoutState extends State<BodyLayout> {
       print("XDX: " + _callSession.toString());
       setState(() {
         showButtons = false;
+        _pwrOpacity = 1;
+        talkImage = "assets/images/talk-image-off.png";
       });
 
       setState(() {
