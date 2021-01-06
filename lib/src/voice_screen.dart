@@ -98,6 +98,9 @@ class _BodyLayoutState extends State<BodyLayout> {
 
     _loopActive = true;
 
+    // debouncing the button
+    await Future.delayed(Duration(milliseconds: 200));
+
     while (_btnDownPressed) {
       // do your thing
       setState(() {
