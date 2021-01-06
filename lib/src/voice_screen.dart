@@ -68,6 +68,7 @@ class _BodyLayoutState extends State<BodyLayout> {
   int _channelSecondPart = 99;
   double _btnTalkOpacity = 1;
   double _pwrOpacity = 1;
+  double _btnLockOpacity = 1;
   bool _btnDownPressed = false;
   bool _btnUpPressed = false;
   bool _btnTalkingPressed = false;
@@ -175,7 +176,7 @@ class _BodyLayoutState extends State<BodyLayout> {
           ),
         ),
         GestureDetector(
-          onTap: () => _toggleSpeaker(context, user),
+          onTap: () => _toggleSpeaker(context, user, _callSession),
           child: Container(
             margin: EdgeInsets.all(15),
             width: 200,
@@ -273,26 +274,35 @@ class _BodyLayoutState extends State<BodyLayout> {
                           children: [
                             Expanded(
                               child: GestureDetector(
-                                onTap: () => (print('lock')),
-                                child: new Container(
-                                  height: 100,
-                                  child: Center(
-                                    child: Text(
-                                      "Lock",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 24,
-                                        decoration: TextDecoration.none,
+                                onTap: () {
+                                  if (_callSession != null)
+                                    _toggleSpeaker(context, user, _callSession);
+                                },
+                                child: Opacity(
+                                  opacity: _btnLockOpacity,
+                                  child: new Container(
+                                    height: MediaQuery.of(context).size.width /
+                                        100 *
+                                        23 // this is the width of the parent
+                                    ,
+                                    child: Center(
+                                      child: Text(
+                                        "Lock",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          decoration: TextDecoration.none,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black45,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      width: 5,
-                                      color: Colors.black,
-                                      style: BorderStyle.solid,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black45,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        width: 5,
+                                        color: Colors.black,
+                                        style: BorderStyle.solid,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -461,7 +471,7 @@ class _BodyLayoutState extends State<BodyLayout> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => print('tapped'),
+                    onTap: () => _muteTalking(context, user),
                     onTapDown: (TapDownDetails details) =>
                         (setState(() => (_btnTalkOpacity = 0.5))),
                     onTapUp: (TapUpDetails details) =>
@@ -657,8 +667,9 @@ class _BodyLayoutState extends State<BodyLayout> {
       _callSession.joinDialog(_channelRenderer, ((publishers) {
         log('YD: ', publishers.toString());
         print('publishersx:' + publishers.toString());
-        _callManager.startCall(_channelRenderer, publishers,
-            _callSession.currentUserId); // event by system message e.g.
+        _callManager.startCall(
+            _channelRenderer, publishers, _callSession.currentUserId);
+        // event by system message e.g.
         subscribeToPublishers(publishers);
         handlePublisherReceived(publishers);
       }));
@@ -701,14 +712,21 @@ class _BodyLayoutState extends State<BodyLayout> {
     }
   }
 
-  void _toggleSpeaker(BuildContext context, CubeUser user) async {
+  void _toggleSpeaker(
+      BuildContext context, CubeUser user, ConferenceSession calSession) async {
     print('speaker toggle');
     if (speakerText == "Stop speaker") {
-      _callSession.enableSpeakerphone(false);
+      calSession.enableSpeakerphone(false);
       setState(() => (speakerText = "Start speaker"));
+      setState(() {
+        _btnLockOpacity = 0.5;
+      });
     } else {
-      _callSession.enableSpeakerphone(true);
+      calSession.enableSpeakerphone(true);
       setState(() => (speakerText = "Stop speaker"));
+      setState(() {
+        _btnLockOpacity = 1;
+      });
     }
   }
 
