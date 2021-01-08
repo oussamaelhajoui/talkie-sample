@@ -62,7 +62,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      -name: checking where i am
+      - name: checking where i am
         run: pwd
         run: ls -lsa
       - name: Upload Release Asset android-arm # uploading the arm
