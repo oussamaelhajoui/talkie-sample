@@ -14,7 +14,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build_android:
+  testing_code:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -39,10 +39,6 @@ jobs:
       # Running the test
       - name: Test flutter code
         run: flutter test
-        
-      # Building an apk
-      - name: build the android apk file
-        run: flutter build apk
   create_release:
     # The type of runner that the job will run on
     name: creating a release
@@ -52,6 +48,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Initing Java from GitHub Actions
+        uses: actions/setup-java@v1
+        with:
+          java-version: '12.x'
+        
+      - name: Initing Flutter action
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '1.22.5'
+          
+      # Building an apk
+      - name: build the android apk file
+        run: flutter build apk
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
