@@ -43,7 +43,7 @@ jobs:
     # The type of runner that the job will run on
     name: creating a release
     runs-on: ubuntu-latest
-    needs: [build_android]
+    needs: [testing_code]
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Checkout code
@@ -58,7 +58,7 @@ jobs:
         uses: subosito/flutter-action@v1
         with:
           flutter-version: '1.22.5'
-          
+
       # Building an apk
       - name: build the android apk file
         run: flutter build apk
