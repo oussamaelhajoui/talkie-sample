@@ -76,7 +76,9 @@ jobs:
       - name: checking where i am
         run: |
           pwd
-          ls -lsa
+          ls -lsa 
+          cd build
+          tree
       - name: Upload Release Asset android-arm # uploading the arm
         id: upload-release-asset-android-arm 
         uses: actions/upload-release-asset@v1
