@@ -63,8 +63,9 @@ jobs:
           draft: false
           prerelease: false
       - name: checking where i am
-        run: pwd
-        run: ls -lsa
+        run: |
+          pwd
+          ls -lsa
       - name: Upload Release Asset android-arm # uploading the arm
         id: upload-release-asset-android-arm 
         uses: actions/upload-release-asset@v1
