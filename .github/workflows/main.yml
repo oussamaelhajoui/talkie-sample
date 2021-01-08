@@ -25,6 +25,8 @@ jobs:
          
       - name: Initing Java from GitHub Actions
         uses: actions/setup-java@v1
+        with:
+          java-version: '12.x'
         
       - name: Initing Flutter action
         uses: subosito/flutter-action@v1
