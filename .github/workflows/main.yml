@@ -77,8 +77,9 @@ jobs:
         run: |
           pwd
           ls -lsa 
-          cd build
-          tree
+          cd build/app/outputs/flutter-apk
+          ls -lsa
+          pwd
       - name: Upload Release Asset android-arm # uploading the arm
         id: upload-release-asset-android-arm 
         uses: actions/upload-release-asset@v1
