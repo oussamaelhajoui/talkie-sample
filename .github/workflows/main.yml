@@ -69,8 +69,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release 1 ${{ github.ref }}
+          tag_name: ${{ github.event.head_commit.message }} # was ${{ github.ref }} maar dit werkt niet..
+          release_name: Release ${{ github.event.head_commit.message }} # was Release 1 ${{ github.ref }} maar dit werkt niet
           draft: false
           prerelease: false
       - name: checking where i am
