@@ -59,6 +59,13 @@ jobs:
         with:
           flutter-version: '1.22.5'
 
+      # generate uuid
+      - name: Set UUID
+        id: generate-uuid
+        uses: filipstefansson/uuid-action@v1
+        with:
+          name: ${{ gihub.sha }}
+
       # Building an apk
       - name: build the android apk file
         run: flutter build apk --split-per-abi
@@ -69,7 +76,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.event.head_commit.message }} # was ${{ github.ref }} maar dit werkt niet..
+          tag_name: ${{ steps.generate-uuid.outputs.uuid }} # was ${{ github.ref }} maar dit werkt niet..
           release_name: Release ${{ github.event.head_commit.message }} # was Release 1 ${{ github.ref }} maar dit werkt niet
           draft: false
           prerelease: false
