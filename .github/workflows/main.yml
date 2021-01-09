@@ -64,7 +64,7 @@ jobs:
         id: generate-uuid
         uses: filipstefansson/uuid-action@v1
         with:
-          name: ${{ gihub.sha }}
+          name: ${{ secrets.GITHUB_TOKEN }}
 
       # Building an apk
       - name: build the android apk file
