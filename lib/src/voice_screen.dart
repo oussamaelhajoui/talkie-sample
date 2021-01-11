@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'utils/call_manager.dart';
 import 'package:flutter/cupertino.dart';
 
+import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audioplayers.dart';
+
 class VoiceScreen extends StatelessWidget {
   final CubeUser user;
   final CubeSession session;
@@ -42,6 +45,10 @@ class BodyLayout extends StatefulWidget {
 }
 
 class _BodyLayoutState extends State<BodyLayout> {
+  AudioCache _audioCache = AudioCache();
+
+  // AudioPlayer audioPlayer = AudioPlayer();
+
   CubeUser user;
   CubeSession session;
   bool _loggedIn = false;
@@ -73,12 +80,27 @@ class _BodyLayoutState extends State<BodyLayout> {
   bool _btnUpPressed = false;
   bool _btnTalkingPressed = false;
 
+  bool speakerMode = true;
+  bool muteMode = true;
+
+  bool inASession = false;
+
+  int amountPeople = 0;
+
   bool _loopActive = false;
   String talkImage = "assets/images/talk-image-off.png";
+
+  String soundOn = "talkie.mp3";
+  String soundPressOne = "talkie-walkie-btn-press-1.mp3";
+  String soundPressTwo = "talkie-walkie-btn-press-2.mp3";
 
   @override
   void initState() {
     super.initState();
+    _audioCache = AudioCache(
+        prefix: "audio/",
+        fixedPlayer: AudioPlayer()..setReleaseMode(ReleaseMode.STOP));
+    AudioPlayer.logEnabled = true;
 
     print('XC: ' + user.toString());
     CubeUser userLogin =
@@ -92,6 +114,10 @@ class _BodyLayoutState extends State<BodyLayout> {
     streams.forEach((opponentId, stream) async {
       await stream.dispose();
     });
+  }
+
+  playLocal(localPath) async {
+    _audioCache.play(localPath);
   }
 
   void _increaseCounterWhilePressed() async {
@@ -157,43 +183,18 @@ class _BodyLayoutState extends State<BodyLayout> {
     channelRenderer = channelStringFirstPart + '.' + channelStringSecondPart;
 
     String name = this.user != null ? this.user.fullName : 's';
-    List<dynamic> talkButtons = [];
+
+    dynamic connectedTextWidget = SizedBox.shrink();
+
     if (showButtons) {
-      talkButtons = [
-        GestureDetector(
-          onTap: () => _muteTalking(context, user),
-          child: Container(
-            margin: EdgeInsets.all(15),
-            width: 200,
-            height: 100,
-            decoration: BoxDecoration(color: Colors.red),
-            child: Center(
-              child: Text(
-                muteText,
-                style: TextStyle(color: Colors.white, fontSize: 25),
-              ),
-            ),
-          ),
+      connectedTextWidget = Text(
+        'connected: ' + amountPeople.toString(),
+        style: TextStyle(
+          fontFamily: '24 display',
         ),
-        GestureDetector(
-          onTap: () => _toggleSpeaker(context, user, _callSession),
-          child: Container(
-            margin: EdgeInsets.all(15),
-            width: 200,
-            height: 100,
-            decoration: BoxDecoration(color: Colors.purple),
-            child: Center(
-              child: Text(
-                speakerText,
-                style: TextStyle(color: Colors.white, fontSize: 25),
-              ),
-            ),
-          ),
-        ),
-      ];
-    } else {
-      talkButtons = [];
+      );
     }
+    print('dsdsds: Rendering');
 
     return SafeArea(
       child: new Column(
@@ -244,6 +245,7 @@ class _BodyLayoutState extends State<BodyLayout> {
                                   decoration: TextDecoration.none,
                                 ),
                               ),
+                              connectedTextWidget
                             ],
                           ),
                           width: MediaQuery.of(context).size.width /
@@ -279,21 +281,29 @@ class _BodyLayoutState extends State<BodyLayout> {
                                     _toggleSpeaker(context, user, _callSession);
                                 },
                                 child: Opacity(
-                                  opacity: _btnLockOpacity,
+                                  opacity: speakerMode && _callSession != null
+                                      ? 0.5
+                                      : 1,
                                   child: new Container(
                                     height: MediaQuery.of(context).size.width /
                                         100 *
                                         23 // this is the width of the parent
                                     ,
                                     child: Center(
-                                      child: Text(
-                                        "Lock",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 24,
-                                          decoration: TextDecoration.none,
-                                        ),
-                                      ),
+                                      child: Icon(
+                                          speakerMode
+                                              ? Icons.volume_mute_rounded
+                                              : Icons.volume_up_rounded,
+                                          size: 24,
+                                          color: Colors.white),
+                                      // child: Text(
+                                      //   "Lock",
+                                      //   style: TextStyle(
+                                      //     color: Colors.white,
+                                      //     fontSize: 24,
+                                      //     decoration: TextDecoration.none,
+                                      //   ),
+                                      // ),
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.black45,
@@ -471,11 +481,22 @@ class _BodyLayoutState extends State<BodyLayout> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => _muteTalking(context, user),
-                    onTapDown: (TapDownDetails details) =>
-                        (setState(() => (_btnTalkOpacity = 0.5))),
-                    onTapUp: (TapUpDetails details) =>
-                        (setState(() => (_btnTalkOpacity = 1))),
+                    onTap: () {
+                      if (_callSession != null)
+                        _muteTalking(context, user, _callSession);
+                    },
+                    onTapDown: (TapDownDetails details) {
+                      setState(() => (_btnTalkOpacity = 0.5));
+                    },
+                    onTapUp: (TapUpDetails details) {
+                      if (muteMode) setState(() => (_btnTalkOpacity = 1));
+                    },
+                    onLongPressEnd: (LongPressEndDetails d) {
+                      if (_callSession != null) {
+                        _muteTalking(context, user, _callSession);
+                        setState(() => (_btnTalkOpacity = 1));
+                      }
+                    },
                     child: Opacity(
                       opacity: _btnTalkOpacity,
                       child: new Container(
@@ -599,6 +620,10 @@ class _BodyLayoutState extends State<BodyLayout> {
       // called when received new opponents/publishers
       print('CD: onpubreceived');
 
+      setState(() {
+        amountPeople += 1;
+      });
+
       subscribeToPublishers(publishers);
       handlePublisherReceived(publishers);
     };
@@ -606,6 +631,9 @@ class _BodyLayoutState extends State<BodyLayout> {
     __callSession.onPublisherLeft = (publisher) {
       // called when opponent/publisher left room
       print('CD: onpubleft');
+      setState(() {
+        amountPeople -= 1;
+      });
       __callSession.unsubscribeFromPublisher(publisher);
     };
 
@@ -629,28 +657,20 @@ class _BodyLayoutState extends State<BodyLayout> {
   _startTalking(
       BuildContext context, CubeUser user, String _channelRenderer) async {
     // activate chat
-    log('PRESSED TO GO');
-    print('pressing gooo');
-
-    setState(() {
-      showButtons = true;
-      _pwrOpacity = 0.5;
-    });
-    if (joinText == 'Tap me to join room 1') {
+    print('dsdsds: ' + inASession.toString());
+    if (!inASession) {
       // inverting the text
 
       setState(() {
+        showButtons = true;
+        _pwrOpacity = 0.5;
+      });
+      setState(() {
+        inASession = true;
         joinText = 'Tap me to leave room 1';
         talkImage = "assets/images/talk-image-pushed.png";
       });
 
-      // if (_callSession != null) {
-      //   _callSession.joinDialog('1', ((publishers) {
-      //     log('YD: ', publishers.toString());
-      //     _callManager.startCall('1', publishers,
-      //         _callSession.currentUserId); // event by system message e.g.
-      //   }));
-      // } else {
       _callClient = ConferenceClient.instance;
 
       int callType = CallType.AUDIO_CALL;
@@ -658,13 +678,14 @@ class _BodyLayoutState extends State<BodyLayout> {
       await _initCalls(user, _callSession);
 
       setState(() => _callSession = _callSession);
-      // _callSession.setMicrophoneMute(false);
-      // _callSession.enableSpeakerphone(false);
 
-      // _callSession.setMicrophoneMute(false);
-      // _callSession.enableSpeakerphone(true);
       print("CREATEDX 2:" + _callSession.toString());
       _callSession.joinDialog(_channelRenderer, ((publishers) {
+        _callSession.setMicrophoneMute(muteMode);
+        _callSession.enableSpeakerphone(speakerMode);
+        setState(() {
+          amountPeople = publishers.length;
+        });
         log('YD: ', publishers.toString());
         print('publishersx:' + publishers.toString());
         _callManager.startCall(
@@ -676,58 +697,63 @@ class _BodyLayoutState extends State<BodyLayout> {
       // }
     } else {
       print("XDX: " + _callSession.toString());
+      print('dsdsdsx: ' + inASession.toString());
       setState(() {
         showButtons = false;
+        inASession = false;
+        joinText = 'Tap me to join room 1';
+        _callSession = null;
+        muteText = "stop talking";
+        speakerText = "Stop speaker";
+        muteMode = true;
+        speakerMode = true;
         _pwrOpacity = 1;
         talkImage = "assets/images/talk-image-off.png";
       });
 
-      setState(() {
-        muteText = "stop talking";
-        speakerText = "Stop speaker";
-      });
+      // _callSession.setMicrophoneMute(true);
+      // _callSession.enableSpeakerphone(true);
 
-      _callSession.setMicrophoneMute(false);
-      _callSession.enableSpeakerphone(true);
+      // _callManager.stopCall();
 
-      _callManager.stopCall();
-
-      _callSession.leave();
+      // _callSession.leave();
       // inverting the text
-      setState(() {
-        joinText = 'Tap me to join room 1';
-        _callSession = null;
-      });
+      // setState(() => (showButtons = false));
+      // setState(() => (inASession = false));
+      // setState(() => (joinText = 'Tap me to join room 1'));
+      // setState(() => (_callSession = null));
+      // setState(() => (muteText = "stop talking"));
+      // setState(() => (speakerText = "Stop speaker"));
+      // setState(() => (muteMode = true));
+      // setState(() => (speakerMode = true));
+      // setState(() => (_pwrOpacity = 1));
+      // setState(() => (talkImage = "assets/images/talk-image-off.png"));
     }
   }
 
-  _muteTalking(BuildContext context, CubeUser user) async {
+  _muteTalking(
+      BuildContext context, CubeUser user, ConferenceSession calSession) async {
     print('muting');
-    if (muteText == "stop talking") {
-      _callSession.setMicrophoneMute(true);
-      setState(() => (muteText = "start talking"));
-    } else {
-      _callSession.setMicrophoneMute(false);
-      setState(() => (muteText = "stop talking"));
-    }
+    setState(() {
+      muteMode = !muteMode;
+      calSession.setMicrophoneMute(muteMode);
+      playLocal(soundOn);
+      print('microphone toggle ' + muteMode.toString());
+    });
+    playLocal(soundOn);
   }
 
   void _toggleSpeaker(
       BuildContext context, CubeUser user, ConferenceSession calSession) async {
-    print('speaker toggle');
-    if (speakerText == "Stop speaker") {
-      calSession.enableSpeakerphone(false);
-      setState(() => (speakerText = "Start speaker"));
-      setState(() {
-        _btnLockOpacity = 0.5;
-      });
-    } else {
-      calSession.enableSpeakerphone(true);
-      setState(() => (speakerText = "Stop speaker"));
-      setState(() {
-        _btnLockOpacity = 1;
-      });
-    }
+    setState(() {
+      print('dsdsds: ' + calSession.toString());
+      speakerMode = !speakerMode;
+      calSession.enableSpeakerphone(speakerMode);
+      playLocal(speakerMode
+          ? soundPressTwo
+          : soundPressOne); // if speakerMode = true play soundPressTwo otherwise play soundPressOne
+      print('speaker toggle ' + speakerMode.toString());
+    });
   }
 
   void subscribeToPublishers(List<int> publishers) {

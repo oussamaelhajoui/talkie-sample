@@ -30,6 +30,7 @@ dependencies:
   animated_text_kit: ^3.1.0
 
   cupertino_icons: ^1.0.0
+  audioplayers: 0.16.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -51,6 +52,22 @@ flutter:
     - assets/images/talk-image-off.png
     - assets/images/talk-image-push.png
     - assets/images/talk-image-pushed.png
+    
+    - assets/sounds/talkie.mp3
+    - assets/sounds/talkie-walkie-btn-press-1.mp3
+    - assets/sounds/talkie-walkie-btn-press-2.mp3
+    
+    - assets/audio/talkie.mp3
+    - assets/audio/talkie-walkie-btn-press-1.mp3
+    - assets/audio/talkie-walkie-btn-press-2.mp3
+    
+    - assets/talkie.mp3
+    - assets/talkie-walkie-btn-press-1.mp3
+    - assets/talkie-walkie-btn-press-2.mp3
+    
+    - audio/talkie.mp3
+    - audio/talkie-walkie-btn-press-1.mp3
+    - audio/talkie-walkie-btn-press-2.mp3
 
   # To add assets to your application, add an assets section, like this:
   # assets:

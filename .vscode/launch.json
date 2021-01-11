@@ -16,6 +16,19 @@
             "type": "dart",
             "deviceId": "sdk gphone x86"
         },
-        
+        {
+            "name": "connectySample android pc",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "sdk gphone x86" //pixel-4
+            // 
+        },
+        {
+            "name": "connectySample android pc 2",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "sdk gphone x86 arm" //pixel 3-a
+            // 
+        },
     ]
 }
